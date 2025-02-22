@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { getRestaurantsBySlug } from "@/data/get-restauants-by-slug";
+import { db } from "@/lib/prisma";
+
+import RestaurantCategories from "./components/categories";
+import RestaurantHeader from "./components/header";
 
 interface RestaurantMenuPageProps {
   params: Promise<{ slug: string }>;
@@ -22,10 +25,22 @@ const RestaurantMenuPage = async ({
     return notFound();
   }
 
-  const restaurant = await getRestaurantsBySlug(slug);
+  const restaurant = await db.restaurant.findUnique({ where: { slug }, include: {
+    menuCategories: {
+      include: {
+        products: true
+      }
+    }
+  } })
 
+  if(!restaurant) {
+    return notFound();
+  }
   return (
-    <div>{restaurant?.name}</div>
+    <main>
+      <RestaurantHeader restaurant={restaurant} />
+      <RestaurantCategories restaurant={restaurant} />
+    </main>
   );
 }
  
